@@ -1,0 +1,17 @@
+
+# Playwright
+node_modules/
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+
+# Secrets — never commit this file
+.env
+
+# Generated audit artifacts: contain live session tokens and screenshots of real data
+/scripts/admin-audit/
+
+# Machine-local agent settings
+.claude/settings.local.json

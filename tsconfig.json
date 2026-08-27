@@ -1,0 +1,21 @@
+// {
+//   "compilerOptions": {
+//     "target": "ESNext",
+//     "module": "commonjs",
+//     "moduleResolution": "node",
+//     "strict": true,
+//     "noEmit": true,
+//     "types": ["node"]
+//   }
+// }
+
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "nodenext",
+    "moduleResolution": "nodenext",
+    "strict": true,
+    "noEmit": true,
+    "types": ["node"]
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "propcatch-ui-automation",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test --project=chromium",
+    "test:admin": "playwright test --project=admin-chromium",
+    "test:admin:auth": "playwright test --project=admin-auth",
+    "test:admin:all": "playwright test --project=admin-auth && playwright test --project=admin-chromium",
+    "test:cross": "playwright test tests/cross-platform --project=admin-chromium",
+    "report": "playwright show-report --host localhost"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "Playwright UI automation suite covering the PropCatch admin and user web apps, including cross-platform data-visibility tests.",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1",
+    "@types/node": "^26.2.0",
+    "dotenv": "^17.4.2"
+  }
+}
