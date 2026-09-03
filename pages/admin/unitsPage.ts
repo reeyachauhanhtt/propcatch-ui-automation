@@ -1,4 +1,12 @@
 import { expect, type Page } from "@playwright/test";
+import {
+  deleteFirstMediaInSlot,
+  expectMediaUploaded,
+  mediaSection,
+  QA_PROJECT_FLOOR_PLAN,
+  QA_PROJECT_GALLERY,
+  uploadMediaFile,
+} from "./mediaPage";
 import { expectAdminShellVisible } from "./shell";
 
 /**
@@ -11,6 +19,7 @@ import { expectAdminShellVisible } from "./shell";
  * - Successful create lands on /units/:id (detail)
  * - Save changes redirects to detail; soft-delete dialog "Yes, delete" → /units
  * - Soft-deleted detail shows Restore + SOFT-DELETED (no Delete)
+ * - Detail media slots: unit.floor_plan, unit.photo
  *
  * Disposable unit numbers must use the QA Autotest prefix and be soft-deleted after use.
  * Link new units to an existing seeded project (select only — do not edit projects).
@@ -29,6 +38,19 @@ export const CONFIGURATION_OPTIONS = [
   "4 BHK",
   "4 BHK Villa",
 ] as const;
+
+export const UNIT_MEDIA = {
+  floorPlan: {
+    slot: "unit.floor_plan",
+    file: QA_PROJECT_FLOOR_PLAN,
+    fileName: "qa-project-floor-plan.png",
+  },
+  photo: {
+    slot: "unit.photo",
+    file: QA_PROJECT_GALLERY,
+    fileName: "qa-project-gallery.png",
+  },
+} as const;
 
 export const AVAILABILITY_OPTIONS = [
   "available",
@@ -248,6 +270,64 @@ export async function openNewUnit(page: Page) {
   await expect(newUnitHeading(page)).toBeVisible();
 }
 
+/** Unit numbers from the current list table (skips the empty-state row). */
+export async function collectUnitNumbers(page: Page) {
+  const rows = unitRows(page);
+  const count = await rows.count();
+  const numbers: string[] = [];
+
+  for (let i = 0; i < count; i++) {
+    const row = rows.nth(i);
+    const text = (await row.innerText()).trim();
+    if (/^No units/i.test(text)) {
+      continue;
+    }
+    const link = row.getByRole("link").first();
+    if ((await link.count()) === 0) {
+      continue;
+    }
+    numbers.push((await link.innerText()).trim());
+  }
+
+  return numbers;
+}
+
+export async function expectFilteredRowsMatch(
+  page: Page,
+  expected: {
+    project?: string;
+    statusLabel?: string;
+    configuration?: string;
+  },
+) {
+  const rows = unitRows(page);
+  const count = await rows.count();
+  expect(count).toBeGreaterThan(0);
+
+  for (let i = 0; i < count; i++) {
+    const row = rows.nth(i);
+    const text = (await row.innerText()).trim();
+    if (/^No units/i.test(text)) {
+      continue;
+    }
+    if (expected.project) {
+      await expect(
+        row.getByRole("link", { name: expected.project }),
+      ).toBeVisible();
+    }
+    if (expected.statusLabel) {
+      await expect(
+        row.getByText(expected.statusLabel, { exact: true }),
+      ).toBeVisible();
+    }
+    if (expected.configuration) {
+      await expect(
+        row.getByText(expected.configuration, { exact: true }),
+      ).toBeVisible();
+    }
+  }
+}
+
 export async function applyUnitFilters(
   page: Page,
   filters: {
@@ -410,6 +490,30 @@ export async function softDeleteUnit(page: Page) {
 export async function expectUnitAbsentFromList(page: Page, unitNumber: string) {
   await openUnits(page);
   await expect(unitNumberLink(page, unitNumber)).toHaveCount(0);
+}
+
+export async function uploadUnitMedia(
+  page: Page,
+  kind: keyof typeof UNIT_MEDIA,
+) {
+  const media = UNIT_MEDIA[kind];
+  await uploadMediaFile(page, media.slot, media.file);
+  await expectMediaUploaded(page, media.slot, media.fileName);
+}
+
+export async function deleteUnitMedia(
+  page: Page,
+  kind: keyof typeof UNIT_MEDIA,
+) {
+  await deleteFirstMediaInSlot(page, UNIT_MEDIA[kind].slot);
+}
+
+export async function expectUnitMediaSlots(page: Page) {
+  for (const media of Object.values(UNIT_MEDIA)) {
+    await expect(mediaSection(page, media.slot)).toBeVisible();
+  }
+  await expect(page.getByText("Floor plan", { exact: true })).toBeVisible();
+  await expect(page.getByText("Photos", { exact: true })).toBeVisible();
 }
 
 export async function cleanupQaUnitByNumber(page: Page, unitNumber: string) {

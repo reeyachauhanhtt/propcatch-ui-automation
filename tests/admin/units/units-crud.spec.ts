@@ -150,6 +150,34 @@ test.describe("Admin Units CRUD", () => {
     unitNumber = editedNumber;
   });
 
+  test("ADMIN-UNITS-041 — can edit configuration, area, price, and availability", async ({
+    page,
+  }) => {
+    unitNumber = uniqueQaUnitNumber();
+    await createUnit(page, {
+      unitNumber,
+      configuration: "2 BHK",
+      availabilityStatus: "available",
+      carpetArea: "950",
+      builtUpArea: "1100",
+      basePrice: "1500000",
+    });
+
+    await openEditFromDetail(page);
+    await configurationInput(page).fill("4 BHK");
+    await availabilityStatusInput(page).fill("booked");
+    await carpetAreaInput(page).fill("1450");
+    await builtUpAreaInput(page).fill("1650");
+    await basePriceInput(page).fill("3200000");
+    await saveUnitChanges(page);
+
+    await expect(page.getByText("4 BHK").first()).toBeVisible();
+    await expect(page.getByText("Booked").first()).toBeVisible();
+    await expect(page.getByText("1,450").first()).toBeVisible();
+    await expect(page.getByText("1,650").first()).toBeVisible();
+    await expect(page.getByText("3,200,000").first()).toBeVisible();
+  });
+
   test("ADMIN-UNITS-050 — soft-delete removes QA unit from list @smoke", async ({
     page,
   }) => {

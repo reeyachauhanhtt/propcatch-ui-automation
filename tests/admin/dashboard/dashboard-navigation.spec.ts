@@ -88,6 +88,16 @@ test.describe("Admin Dashboard navigation", () => {
     await openQuickAction(page, "Add unit");
   });
 
+  test("ADMIN-DASH-035 — Available units metric → Units list → New unit form", async ({
+    page,
+  }) => {
+    await openMetricCard(page, /Available units/i, /\/units\/?$/);
+    await expect(page.getByRole("heading", { name: "Units", exact: true })).toBeVisible();
+    await page.getByRole("link", { name: "+ New unit", exact: true }).click();
+    await expect(page).toHaveURL(/\/units\/new/);
+    await expect(page.getByRole("heading", { name: "New unit", exact: true })).toBeVisible();
+  });
+
   test("ADMIN-DASH-033 — Quick action Add lead opens New lead", async ({ page }) => {
     await openQuickAction(page, "Add lead");
   });

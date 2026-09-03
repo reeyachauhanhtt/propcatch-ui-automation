@@ -3,8 +3,14 @@ import { expectSidebarItemActive } from "../../../pages/admin/shell";
 import {
   applyFiltersButton,
   applyUnitFilters,
+  collectUnitNumbers,
+  expectFilteredRowsMatch,
   expectUnitsListLoaded,
   filterConfigInput,
+  filterMaxCarpetInput,
+  filterMaxPriceInput,
+  filterMinCarpetInput,
+  filterMinPriceInput,
   filterProjectSelect,
   filterStatusSelect,
   newUnitHeading,
@@ -76,6 +82,10 @@ test.describe("Admin Units list", () => {
     await expect(filterProjectSelect(page)).toBeVisible();
     await expect(filterStatusSelect(page)).toBeVisible();
     await expect(filterConfigInput(page)).toBeVisible();
+    await expect(filterMinPriceInput(page)).toBeVisible();
+    await expect(filterMaxPriceInput(page)).toBeVisible();
+    await expect(filterMinCarpetInput(page)).toBeVisible();
+    await expect(filterMaxCarpetInput(page)).toBeVisible();
     await expect(applyFiltersButton(page)).toBeVisible();
     await expect(resetFiltersLink(page)).toBeVisible();
     await expect(resetFiltersLink(page)).toHaveAttribute("href", "/units");
@@ -162,5 +172,50 @@ test.describe("Admin Units list", () => {
     await page.reload();
     await expectUnitsListLoaded(page);
     await expect(unitsHeading(page)).toBeVisible();
+  });
+
+  test("ADMIN-UNITS-011 — different filter sets return different unit lists", async ({
+    page,
+  }) => {
+    const unfiltered = await collectUnitNumbers(page);
+    expect(unfiltered.length).toBeGreaterThan(1);
+
+    await applyUnitFilters(page, {
+      project: "Montessa Heights",
+      status: "available",
+      configuration: "2 BHK",
+    });
+    const montessaAvailable2Bhk = await collectUnitNumbers(page);
+    expect(montessaAvailable2Bhk.length).toBeGreaterThan(0);
+    await expectFilteredRowsMatch(page, {
+      project: "Montessa Heights",
+      statusLabel: "Available",
+      configuration: "2 BHK",
+    });
+
+    await resetFiltersLink(page).click();
+    await expect(page).toHaveURL(/\/units\/?$/);
+
+    await applyUnitFilters(page, {
+      project: "Azure Crest Residences",
+      status: "available",
+      configuration: "3 BHK",
+    });
+    const azureAvailable3Bhk = await collectUnitNumbers(page);
+    expect(azureAvailable3Bhk.length).toBeGreaterThan(0);
+    await expectFilteredRowsMatch(page, {
+      project: "Azure Crest Residences",
+      statusLabel: "Available",
+      configuration: "3 BHK",
+    });
+
+    const overlap = montessaAvailable2Bhk.filter((unit) =>
+      azureAvailable3Bhk.includes(unit),
+    );
+    expect(overlap).toHaveLength(0);
+    expect(new Set(montessaAvailable2Bhk)).not.toEqual(
+      new Set(azureAvailable3Bhk),
+    );
+    expect(unfiltered.length).toBeGreaterThan(montessaAvailable2Bhk.length);
   });
 });

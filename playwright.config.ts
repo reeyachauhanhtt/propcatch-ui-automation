@@ -13,6 +13,14 @@ const USER_BASE_URL =
 const ADMIN_BASE_URL =
   process.env.ADMIN_BASE_URL || 'https://propcatch-admin.vercel.app';
 
+/* Supabase backend (discovered from the deployed frontend bundles). The anon
+ * key is public by design — it only grants what RLS allows for `anon`. */
+const SUPABASE_URL =
+  process.env.SUPABASE_URL || 'https://swparfqoughqrrocwcka.supabase.co';
+const SUPABASE_ANON_KEY =
+  process.env.SUPABASE_ANON_KEY ||
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN3cGFyZnFvdWdocXJyb2N3Y2thIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzAzODExOTQsImV4cCI6MjA4NTk1NzE5NH0.v5opPfrQZ2SOtU2SG9E-pH81Mof2YGiFlBoJ8lhI6KM';
+
 const desktopViewport = {
   viewport: { width: 1920, height: 1080 },
   deviceScaleFactor: 2,
@@ -132,6 +140,19 @@ export default defineConfig({
         ...desktopViewport,
         baseURL: ADMIN_BASE_URL,
         storageState: ADMIN_AUTH_FILE,
+      },
+    },
+
+    /* API tests (tests/api) — no browser, uses the `request` fixture. */
+    {
+      name: 'api',
+      testMatch: /tests\/api\/.*\.spec\.ts/,
+      use: {
+        baseURL: SUPABASE_URL,
+        extraHTTPHeaders: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        },
       },
     },
   ],
