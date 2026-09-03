@@ -14,7 +14,8 @@ import { expectAdminShellVisible } from "./shell";
  *
  * Verified 2026-08-26 against the live Admin portal:
  * - List: filters (Project, Availability, Config, Base price, Carpet) + table + pagination
- * - Create: /units/new — Project / Unit number / Configuration / Availability required
+ * - Create: /units/new — Project / Unit number / Configuration required
+ *   Availability is OPTIONAL and defaults to "available" when omitted
  *   Configuration, availability, and facing use datalist suggestions
  * - Successful create lands on /units/:id (detail)
  * - Save changes redirects to detail; soft-delete dialog "Yes, delete" → /units
