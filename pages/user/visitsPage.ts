@@ -33,9 +33,19 @@ export function visitsSubtitle(page: Page) {
   return page.getByText("Upcoming + past bookings.", { exact: true });
 }
 
+/** The "Upcoming" section heading (uppercased by CSS). Only rendered when the user has future-dated visits. */
+export function upcomingSectionHeading(page: Page) {
+  return page.getByRole("heading", { name: "Upcoming" });
+}
+
 /** The "Past" section heading (uppercased by CSS). */
 export function pastSectionHeading(page: Page) {
   return page.getByRole("heading", { name: "Past" });
+}
+
+/** Visit cards whose project name matches. */
+export function visitCardByProject(page: Page, project: string) {
+  return visitCards(page).filter({ hasText: project });
 }
 
 /** Every visit card (a list item whose only child is the project link). */

@@ -343,6 +343,40 @@ export function markCompletedButton(page: Page) {
   return main(page).getByRole("button", { name: "Mark completed", exact: true });
 }
 
+export function followUpsSection(page: Page) {
+  return page.getByTestId("lead-followups-section");
+}
+
+export function callbacksSection(page: Page) {
+  return page.getByTestId("lead-callbacks-section");
+}
+
+export function followUpItemByNotes(page: Page, notes: string) {
+  return followUpsSection(page).locator("li").filter({ hasText: notes });
+}
+
+export function callbackItemByRemarks(page: Page, remarks: string) {
+  return callbacksSection(page).locator("li").filter({ hasText: remarks });
+}
+
+export async function markFollowUpCompleted(page: Page, notes: string) {
+  const item = followUpItemByNotes(page, notes);
+  await item.getByRole("button", { name: "Mark completed", exact: true }).click();
+  await expect(
+    item.getByRole("button", { name: "Mark completed", exact: true }),
+  ).toHaveCount(0, { timeout: 15_000 });
+  await expect(item.getByText(/Completed/)).toBeVisible();
+}
+
+export async function markCallbackCompleted(page: Page, remarks: string) {
+  const item = callbackItemByRemarks(page, remarks);
+  await item.getByRole("button", { name: "Mark completed", exact: true }).click();
+  await expect(
+    item.getByRole("button", { name: "Mark completed", exact: true }),
+  ).toHaveCount(0, { timeout: 15_000 });
+  await expect(item.getByText(/Completed/i)).toBeVisible();
+}
+
 export function callbackStatusInput(page: Page) {
   return page.locator("#callback_status");
 }
@@ -652,6 +686,7 @@ export async function fillLeadForm(
     budgetMin?: string;
     budgetMax?: string;
     message?: string;
+    userId?: string;
   },
 ) {
   await contactNameInput(page).fill(data.name);
@@ -679,6 +714,9 @@ export async function fillLeadForm(
   if (data.message !== undefined) {
     await messageInput(page).fill(data.message);
   }
+  if (data.userId !== undefined) {
+    await linkedUserIdInput(page).fill(data.userId);
+  }
 }
 
 export async function createLead(
@@ -693,6 +731,7 @@ export async function createLead(
     budgetMin?: string;
     budgetMax?: string;
     message?: string;
+    userId?: string;
   },
 ) {
   await openNewLead(page);
