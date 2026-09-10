@@ -1,9 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect, type Page } from "@playwright/test";
 import {
   cityChip,
   clearAllFiltersButton,
   configChip,
   emptyStateMessage,
+  expectFullListing,
   filtersButton,
   filtersPanel,
   projectCards,
@@ -15,9 +16,28 @@ import {
 
 /**
  * Project filter behaviour on /projects (PUBLIC, no auth gate).
+ *
+ * Inventory size is live data, so tests read the total from the count label
+ * instead of assuming a fixed "N of 21" inventory.
  */
 test.describe("Project Listing - Filters", () => {
   test.describe.configure({ timeout: 45_000 });
+
+  async function openProjects(page: Page) {
+    await page.goto("/projects");
+    const { total } = await readCountFromLabel(page);
+    expect(total).toBeGreaterThan(1);
+    return total;
+  }
+
+  async function expectNarrowedListing(page: Page, total: number) {
+    await expect
+      .poll(async () => (await readCountFromLabel(page)).shown)
+      .toBeLessThan(total);
+    const { shown } = await readCountFromLabel(page);
+    await expect(projectCards(page)).toHaveCount(shown);
+    return shown;
+  }
 
   // ------------------------------------------------------------------
   // 5 & 6. Filters
@@ -46,13 +66,13 @@ test.describe("Project Listing - Filters", () => {
   });
 
   test("PROJECT-015 - STATUS filter updates the results", async ({ page }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
     await filtersButton(page).click();
 
     await statusChip(page, "Under Construction").click();
 
-    await expect(page.getByText(/11 of 21 match your filters/)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(11);
+    const shown = await expectNarrowedListing(page, total);
+    expect(shown).toBeGreaterThan(0);
     const badges = await projectCards(page).evaluateAll((els) =>
       els.map(
         (el) => el.querySelector("span.rounded-full")?.textContent?.trim() ?? "",
@@ -66,54 +86,54 @@ test.describe("Project Listing - Filters", () => {
   test("PROJECT-016 - CONFIGURATION filter updates the results", async ({
     page,
   }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
     await filtersButton(page).click();
 
     await configChip(page, "2 BHK").click();
 
-    await expect(page.getByText(/10 of 21 match your filters/)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(10);
+    const shown = await expectNarrowedListing(page, total);
+    expect(shown).toBeGreaterThan(0);
   });
 
   test("PROJECT-017 - an individual city filter can be cleared", async ({
     page,
   }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
 
     await cityChip(page, "Mumbai").click();
-    await expect(page.getByText(/8 of 21 match your filters/)).toBeVisible();
+    await expectNarrowedListing(page, total);
     await expect(cityChip(page, "Mumbai")).toHaveClass(/bg-accent/);
 
     await cityChip(page, "All").click();
-    await expect(page.getByText(/21 of 21 match your filters/)).toBeVisible();
+    await expectFullListing(page, total);
     await expect(cityChip(page, "Mumbai")).not.toHaveClass(/bg-accent/);
   });
 
   test("PROJECT-018 - Clear all filters resets the results", async ({ page }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
     await filtersButton(page).click();
 
     await statusChip(page, "Under Construction").click();
     await configChip(page, "2 BHK").click();
-    await expect(page.getByText(/4 of 21 match your filters/)).toBeVisible();
+    await expectNarrowedListing(page, total);
     await expect(saveThisSearchButton(page)).toBeVisible();
 
     await clearAllFiltersButton(page).click();
 
-    await expect(page.getByText(/21 of 21 match your filters/)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(21);
+    await expectFullListing(page, total);
   });
 
   test("PROJECT-019 - applying two filters together narrows the results", async ({
     page,
   }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
     await filtersButton(page).click();
 
     await statusChip(page, "Under Construction").click();
     await configChip(page, "2 BHK").click();
 
-    await expect(page.getByText(/4 of 21 match your filters/)).toBeVisible();
+    const shown = await expectNarrowedListing(page, total);
+    expect(shown).toBeGreaterThan(0);
     const badges = await projectCards(page).evaluateAll((els) =>
       els.map(
         (el) => el.querySelector("span.rounded-full")?.textContent?.trim() ?? "",
@@ -125,16 +145,16 @@ test.describe("Project Listing - Filters", () => {
   });
 
   test("PROJECT-020 - multiple filters clear cleanly", async ({ page }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
     await filtersButton(page).click();
 
     await statusChip(page, "Under Construction").click();
     await configChip(page, "2 BHK").click();
-    await expect(projectCards(page)).toHaveCount(4);
+    await expectNarrowedListing(page, total);
 
     await clearAllFiltersButton(page).click();
 
-    await expect(projectCards(page)).toHaveCount(21);
+    await expectFullListing(page, total);
     await expect(statusChip(page, "Under Construction")).not.toHaveClass(/bg-primary/);
     await expect(configChip(page, "2 BHK")).not.toHaveClass(/bg-primary/);
   });
@@ -142,12 +162,12 @@ test.describe("Project Listing - Filters", () => {
   test("PROJECT-021 - changing one filter keeps the other active", async ({
     page,
   }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
     await filtersButton(page).click();
 
     await statusChip(page, "Under Construction").click();
     await configChip(page, "2 BHK").click();
-    await expect(page.getByText(/4 of 21 match your filters/)).toBeVisible();
+    await expectNarrowedListing(page, total);
 
     await statusChip(page, "Ready to Move").click();
 
@@ -172,16 +192,22 @@ test.describe("Project Listing - Filters", () => {
   test("PROJECT-029 - a filter with no matching results shows an empty state and recovers", async ({
     page,
   }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
     await filtersButton(page).click();
 
     await statusChip(page, "New Launch").click();
-    await expect(page.getByText(/0 of 21 match your filters/)).toBeVisible();
-    await expect(emptyStateMessage(page)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(0);
+    await expect
+      .poll(async () => (await readCountFromLabel(page)).shown)
+      .toBeLessThan(total);
+
+    const { shown } = await readCountFromLabel(page);
+    await expect(projectCards(page)).toHaveCount(shown);
+    if (shown === 0) {
+      await expect(emptyStateMessage(page)).toBeVisible();
+    }
 
     await clearAllFiltersButton(page).click();
-    await expect(projectCards(page)).toHaveCount(21);
+    await expectFullListing(page, total);
   });
 
   // ------------------------------------------------------------------
@@ -191,32 +217,33 @@ test.describe("Project Listing - Filters", () => {
   test("PROJECT-033 - filter state resets after navigating away and back", async ({
     page,
   }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
 
     await cityChip(page, "Mumbai").click();
-    await expect(page.getByText(/8 of 21 match your filters/)).toBeVisible();
+    await expectNarrowedListing(page, total);
 
     await projectCards(page).first().click();
     await expect(page).toHaveURL(/\/p\//);
 
     await page.goBack();
     await expect(page).toHaveURL(/\/projects$/);
-    await expect(page.getByText(/21 of 21 match your filters/)).toBeVisible();
+    await expectFullListing(page, total);
   });
 
   test("PROJECT-034 - search and filter state resets after refresh", async ({
     page,
   }) => {
-    await page.goto("/projects");
+    const total = await openProjects(page);
 
     await cityChip(page, "Mumbai").click();
     await searchInput(page).fill("Montessa");
-    await expect(page.getByText(/1 of 21 match your filters/)).toBeVisible();
+    await expect
+      .poll(async () => (await readCountFromLabel(page)).shown)
+      .toBe(1);
 
     await page.reload();
 
     await expect(searchInput(page)).toHaveValue("");
-    await expect(page.getByText(/21 of 21 match your filters/)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(21);
+    await expectFullListing(page, total);
   });
 });

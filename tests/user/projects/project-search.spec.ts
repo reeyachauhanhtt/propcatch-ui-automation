@@ -2,8 +2,11 @@ import { test, expect } from "@playwright/test";
 import {
   emptyStateMessage,
   expectCardCountMatchesLabel,
+  expectFullListing,
+  expectShownOfTotal,
   projectCardByName,
   projectCards,
+  readCountFromLabel,
   searchInput,
 } from "../../../pages/user/projectListingPage";
 
@@ -31,10 +34,11 @@ test.describe("Project Listing - Search", () => {
     page,
   }) => {
     await page.goto("/projects");
+    const { total } = await readCountFromLabel(page);
 
     await searchInput(page).fill("Montessa Heights");
 
-    await expect(page.getByText(/1 of 21 match your filters/)).toBeVisible();
+    await expectShownOfTotal(page, 1, total);
     await expect(projectCardByName(page, "Montessa Heights")).toHaveCount(1);
   });
 
@@ -42,6 +46,7 @@ test.describe("Project Listing - Search", () => {
     page,
   }) => {
     await page.goto("/projects");
+    const { total } = await readCountFromLabel(page);
 
     await searchInput(page).fill("Palm");
 
@@ -55,7 +60,7 @@ test.describe("Project Listing - Search", () => {
         ).every((name) => name.includes("Palm")),
       )
       .toBe(true);
-    await expect(page.getByText(/2 of 21 match your filters/)).toBeVisible();
+    await expectShownOfTotal(page, 2, total);
     const names = await page.locator('a[href^="/p/"] h3').allInnerTexts();
     expect(names.length).toBe(2);
     for (const name of names) {
@@ -68,11 +73,11 @@ test.describe("Project Listing - Search", () => {
     page,
   }) => {
     await page.goto("/projects");
+    const { total } = await readCountFromLabel(page);
 
     await searchInput(page).fill("zzzz-no-such-project");
 
-    await expect(page.getByText(/0 of 21 match your filters/)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(0);
+    await expectShownOfTotal(page, 0, total);
     await expect(emptyStateMessage(page)).toBeVisible();
   });
 
@@ -80,13 +85,13 @@ test.describe("Project Listing - Search", () => {
     page,
   }) => {
     await page.goto("/projects");
+    const { total } = await readCountFromLabel(page);
 
     await searchInput(page).fill("Montessa");
     await expect(projectCards(page)).toHaveCount(1);
 
     await searchInput(page).fill("");
-    await expect(page.getByText(/21 of 21 match your filters/)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(21);
+    await expectFullListing(page, total);
   });
 
   test("PROJECT-012 - empty search input keeps the full listing", async ({
@@ -95,19 +100,19 @@ test.describe("Project Listing - Search", () => {
     await page.goto("/projects");
 
     await expect(searchInput(page)).toHaveValue("");
-    await expect(page.getByText(/21 of 21 match your filters/)).toBeVisible();
-    await expect(projectCards(page)).toHaveCount(21);
+    await expectFullListing(page);
   });
 
   test("PROJECT-013 - search with leading/trailing spaces still matches", async ({
     page,
   }) => {
     await page.goto("/projects");
+    const { total } = await readCountFromLabel(page);
 
     await searchInput(page).fill("  Montessa Heights  ");
 
     await expect(projectCardByName(page, "Montessa Heights")).toHaveCount(1);
-    await expect(page.getByText(/1 of 21 match your filters/)).toBeVisible();
+    await expectShownOfTotal(page, 1, total);
   });
 
   // ------------------------------------------------------------------
@@ -118,12 +123,13 @@ test.describe("Project Listing - Search", () => {
     page,
   }) => {
     await page.goto("/projects");
+    const { total } = await readCountFromLabel(page);
 
     await searchInput(page).fill("zzzz-no-such-project");
     await expect(emptyStateMessage(page)).toBeVisible();
     await expect(projectCards(page)).toHaveCount(0);
 
     await searchInput(page).fill("");
-    await expect(projectCards(page)).toHaveCount(21);
+    await expectFullListing(page, total);
   });
 });

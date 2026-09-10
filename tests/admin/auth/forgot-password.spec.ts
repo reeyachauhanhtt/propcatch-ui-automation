@@ -67,7 +67,8 @@ test.describe("Admin Forgot password", () => {
     await page.getByRole("link", { name: "Back to sign in" }).click();
 
     await expect(page).toHaveURL(/\/login/);
-    await expect(page.getByText("Internal portal sign-in")).toBeVisible();
+    await expect(page.locator("#email")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();
   });
 
   test("ADMIN-FORGOT-006 — Forgot password? from login opens the reset request page", async ({

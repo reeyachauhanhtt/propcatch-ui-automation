@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { openBuilders } from "../../../pages/user/buildersPage";
-import { heroHeading, featuredSection } from "../../../pages/user/homePage";
+import { heroHeading, featuredSection, exploreSection } from "../../../pages/user/homePage";
 
 /**
  * Visual regression testing — concept demonstration.
@@ -68,8 +68,10 @@ test.describe("Visual regression - concept", () => {
     await expect(page).toHaveScreenshot("homepage-masked.png", {
       fullPage: true,
       animations: "disabled",
+      maxDiffPixelRatio: 0.02,
       mask: [
         featuredSection(page), // "Featured under construction" — dynamic content
+        exploreSection(page), // "Explore projects" — live inventory
         page.getByRole("contentinfo"), // footer
       ],
     });

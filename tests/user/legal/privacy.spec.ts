@@ -5,6 +5,7 @@ import {
   expectLegalLoaded,
   openLegal,
 } from "../../../pages/user/legalPage";
+import { profileNavLink } from "../../../pages/user/profilePage";
 
 /**
  * Privacy Policy (/legal/privacy) — public legal page.
@@ -39,9 +40,8 @@ test.describe("Legal - Privacy Policy", () => {
 
   test("LEGAL-004 - privacy is reachable from profile", async ({ page }) => {
     await page.goto("/profile");
-    await page
-      .locator("main a", { has: page.getByText("Privacy Policy", { exact: true }) })
-      .click();
+    await expect(page).toHaveURL(/\/profile$/);
+    await profileNavLink(page, "Privacy Policy").click();
     await expectLegalLoaded(page, "privacy");
   });
 

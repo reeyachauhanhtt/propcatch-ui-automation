@@ -13,6 +13,7 @@ import {
   requireUserCredsForDenial,
   expectLoggedInAdmin,
   expectOnLoginPage,
+  loginTagline,
   signOutAdmin,
 } from "../../../pages/admin/auth";
 
@@ -29,7 +30,7 @@ test.describe("Admin Login", () => {
 
       await expect(page).toHaveTitle(/PropCatch Admin/i);
       await expect(page.getByText("PropCatch Admin").first()).toBeVisible();
-      await expect(page.getByText("Internal portal sign-in")).toBeVisible();
+      await expect(loginTagline(page)).toBeVisible();
       await expect(emailInput(page)).toBeVisible();
       await expect(passwordInput(page)).toBeVisible();
       await expect(page.getByRole("button", { name: "Sign in", exact: true })).toBeVisible();

@@ -9,7 +9,7 @@ export function projectsHeading(page: Page) {
   return page.getByRole("heading", { name: "Projects" });
 }
 
-/** "N of 21 match your filters" summary line. */
+/** "N of TOTAL match your filters" summary line. */
 export function countLabel(page: Page) {
   return page.getByText(/\d+ of \d+ match your filters/);
 }
@@ -23,7 +23,10 @@ export function filtersButton(page: Page) {
 }
 
 export function mapViewLink(page: Page) {
-  return page.getByRole("link", { name: "Map view" });
+  return page
+    .locator("main")
+    .getByRole("link", { name: /Map view/i })
+    .or(page.locator('main a[href="/map"]'));
 }
 
 /** City chips in the listing toolbar (All / Ahmedabad / Mumbai / Surat). */
@@ -104,5 +107,24 @@ export async function readCountFromLabel(page: Page): Promise<{
 /** Assert that the rendered card count equals the number shown in the label. */
 export async function expectCardCountMatchesLabel(page: Page) {
   const { shown } = await readCountFromLabel(page);
+  await expect(projectCards(page)).toHaveCount(shown);
+}
+
+/** Wait until the listing shows every project (shown === total). */
+export async function expectFullListing(page: Page, total?: number) {
+  await expect(countLabel(page)).toBeVisible();
+  const expectedTotal = total ?? (await readCountFromLabel(page)).total;
+  expect(expectedTotal).toBeGreaterThan(0);
+  await expect(countLabel(page)).toHaveText(
+    new RegExp(`${expectedTotal} of ${expectedTotal} match your filters`),
+  );
+  await expect(projectCards(page)).toHaveCount(expectedTotal);
+}
+
+/** Wait until the visible result count is `shown` of the known inventory total. */
+export async function expectShownOfTotal(page: Page, shown: number, total: number) {
+  await expect(countLabel(page)).toHaveText(
+    new RegExp(`${shown} of ${total} match your filters`),
+  );
   await expect(projectCards(page)).toHaveCount(shown);
 }

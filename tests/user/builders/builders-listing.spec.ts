@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import {
+  builderCardByName,
   builderCardLogo,
   builderCardMonogram,
   builderCardProjectCount,
@@ -47,8 +48,24 @@ test.describe("Builders - listing", () => {
   test("BUILDERS-003 - all seeded builders are listed", async ({ page }) => {
     await openBuilders(page);
 
-    // 8 seeded builders (verified 2026-08-26), matching the "N listed" summary.
-    await expect(builderCards(page)).toHaveCount(8);
+    const subtitle = (await buildersSubtitle(page).innerText()).trim();
+    const listed = Number(subtitle.match(/(\d+) listed/)?.[1]);
+    expect(listed).toBeGreaterThan(0);
+    await expect(builderCards(page)).toHaveCount(listed);
+
+    const seeded = [
+      "Acme Realty",
+      "Elite Homes",
+      "Happy Homes",
+      "PrimeBuild Infra",
+      "Shiv Developers",
+      "Skyline Group",
+      "UrbanEdge Realty",
+      "Vertex Commercial Spaces",
+    ];
+    for (const name of seeded) {
+      await expect(builderCardByName(page, name)).toBeVisible();
+    }
   });
 
   test("BUILDERS-004 - builders are sorted alphabetically", async ({ page }) => {

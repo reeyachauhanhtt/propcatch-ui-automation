@@ -80,14 +80,17 @@ export function dashboardHeading(page: Page) {
   return page.getByRole("heading", { name: "Dashboard", exact: true });
 }
 
+/** Tagline under the Sign in heading on /login. */
+export function loginTagline(page: Page) {
+  return page.getByText(/listings, leads and verification/i);
+}
+
 export async function openLogin(page: Page, redirectTo?: string) {
   const path = redirectTo
     ? `/login?redirectTo=${encodeURIComponent(redirectTo)}`
     : "/login";
   await page.goto(path);
-  await expect(page.getByText("Internal portal sign-in")).toBeVisible();
-  await expect(emailInput(page)).toBeVisible();
-  await expect(passwordInput(page)).toBeVisible();
+  await expectOnLoginPage(page);
 }
 
 export async function fillLogin(page: Page, email: string, password: string) {
@@ -97,7 +100,9 @@ export async function fillLogin(page: Page, email: string, password: string) {
 
 export async function expectOnLoginPage(page: Page) {
   await expect(page).toHaveURL(/\/login/);
-  await expect(page.getByText("Internal portal sign-in")).toBeVisible();
+  await expect(emailInput(page)).toBeVisible();
+  await expect(passwordInput(page)).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Sign in$|^Signing in/ })).toBeVisible();
 }
 
 export async function expectLoggedInAdmin(page: Page) {
@@ -115,7 +120,7 @@ export async function loginAsAdmin(page: Page) {
   await page.goto("/login");
 
   await Promise.race([
-    page.getByText("Internal portal sign-in").waitFor({ state: "visible", timeout: 15_000 }),
+    emailInput(page).waitFor({ state: "visible", timeout: 15_000 }),
     logoutButton(page).waitFor({ state: "visible", timeout: 15_000 }),
   ]);
 

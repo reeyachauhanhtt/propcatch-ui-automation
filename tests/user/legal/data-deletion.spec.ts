@@ -7,6 +7,7 @@ import {
   openLegal,
   submitDeletionButton,
 } from "../../../pages/user/legalPage";
+import { profileNavLink } from "../../../pages/user/profilePage";
 
 /**
  * Data Deletion (/legal/data-deletion) — public legal page with a deletion
@@ -57,11 +58,8 @@ test.describe("Legal - Data Deletion", () => {
     page,
   }) => {
     await page.goto("/profile");
-    await page
-      .locator("main a", {
-        has: page.getByText("Data Deletion Request", { exact: true }),
-      })
-      .click();
+    await expect(page).toHaveURL(/\/profile$/);
+    await profileNavLink(page, "Data Deletion Request").click();
     await expectLegalLoaded(page, "data-deletion");
   });
 

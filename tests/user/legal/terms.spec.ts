@@ -5,6 +5,7 @@ import {
   expectLegalLoaded,
   openLegal,
 } from "../../../pages/user/legalPage";
+import { profileNavLink } from "../../../pages/user/profilePage";
 
 /**
  * Terms of Service (/legal/terms) — public legal page.
@@ -41,11 +42,8 @@ test.describe("Legal - Terms of Service", () => {
 
   test("LEGAL-009 - terms is reachable from profile", async ({ page }) => {
     await page.goto("/profile");
-    await page
-      .locator("main a", {
-        has: page.getByText("Terms of Service", { exact: true }),
-      })
-      .click();
+    await expect(page).toHaveURL(/\/profile$/);
+    await profileNavLink(page, "Terms of Service").click();
     await expectLegalLoaded(page, "terms");
   });
 

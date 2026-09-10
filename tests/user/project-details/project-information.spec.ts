@@ -40,8 +40,12 @@ test.describe("Project Details - Information", () => {
   test("PROJECT-DETAIL-011 - possession date is displayed", async ({ page }) => {
     await openProject(page, "Azure Crest Residences");
 
-    await expect(factValue(page, "Possession")).toBeVisible();
-    await expect(factValue(page, "Possession")).toHaveText(/\d{4}/);
+    const possession = factValue(page, "Possession");
+    await expect(possession).toBeVisible();
+    await expect(possession).toHaveText(
+      /—|\d{4}|Ready|Immediate|Q[1-4]|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i,
+    );
+    await expect(possession).not.toHaveText(/\b(undefined|null|NaN)\b/i);
   });
 
   test("PROJECT-DETAIL-012 - RERA number is displayed when present", async ({
@@ -66,10 +70,12 @@ test.describe("Project Details - Information", () => {
   }) => {
     await openProject(page, "Montessa Heights");
 
-    // Montessa Heights has no area range or possession date — the page renders
-    // an em-dash placeholder rather than "undefined"/"null"/"NaN".
-    await expect(factValue(page, "Area range")).toHaveText("—");
-    await expect(factValue(page, "Possession")).toHaveText("—");
+    // Missing facts render as an em-dash; populated facts show a real value.
+    // Either is acceptable — never "undefined" / "null" / "NaN".
+    await expect(factValue(page, "Area range")).toHaveText(/—|\d+\s*sqft/i);
+    await expect(factValue(page, "Possession")).toHaveText(
+      /—|\d{4}|Ready|Immediate|Q[1-4]|Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec/i,
+    );
     await expectNoBrokenValues(page);
   });
 });

@@ -15,6 +15,7 @@ import {
   logoLink,
   openMapViewLink,
 } from "../../../pages/user/homePage";
+import { profileNavLink } from "../../../pages/user/profilePage";
 
 test.describe("Homepage navigation", () => {
   test.describe.configure({ timeout: 45_000 });
@@ -105,12 +106,8 @@ test.describe("Homepage navigation", () => {
 
     await expect(page).toHaveURL(/\/profile/);
     await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-    await expect(
-      page.getByRole("main").getByRole("link", { name: /My Enquiries/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("main").getByRole("link", { name: /Site Visits/ }),
-    ).toBeVisible();
+    await expect(profileNavLink(page, "My Enquiries")).toBeVisible();
+    await expect(profileNavLink(page, "Site Visits")).toBeVisible();
   });
 
   test("HOMEPAGE-033 - Browse projects CTA opens the projects page", async ({
