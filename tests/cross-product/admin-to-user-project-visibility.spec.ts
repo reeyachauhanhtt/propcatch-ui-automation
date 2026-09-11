@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { openUserContext } from "../../pages/crossPlatform";
+import { openUserContext } from "../../pages/crossProduct";
 import {
   QA_PROJECT_BUILDER,
   cleanupQaProjectByName,

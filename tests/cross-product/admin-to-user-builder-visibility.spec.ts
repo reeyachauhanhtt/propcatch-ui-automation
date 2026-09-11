@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
-import { openUserContext } from "../../pages/crossPlatform";
+import { waitUntilPublicBuilderExists } from "../api/supabase";
+import { openUserContext } from "../../pages/crossProduct";
 import {
   builderIdFromUrl,
   cleanupQaBuilderByName,
@@ -25,7 +26,9 @@ import {
 } from "../../pages/user/buildersPage";
 
 /**
- * Admin builder create (+ logo) → public /builders and /b/:id visibility.
+ * Admin builder create (+ logo) → public API → user /builders and /b/:id.
+ * After Admin save, poll GET /rest/v1/builders until the row is readable
+ * (same anon surface the user app uses), then assert the user UI.
  * When linked to a QA project, that project appears under "Projects by …".
  */
 test.describe("Admin → User builder visibility", () => {
@@ -65,6 +68,13 @@ test.describe("Admin → User builder visibility", () => {
     builderId = builderIdFromUrl(page.url());
     await uploadBuilderLogo(page);
 
+    const apiBuilder = await waitUntilPublicBuilderExists({
+      name: builderName,
+      id: builderId,
+    });
+    expect(apiBuilder.id).toBe(builderId);
+    expect(apiBuilder.name).toBe(builderName);
+
     const { context, page: userPage } = await openUserContext(browser);
     try {
       await openUserBuilders(userPage);
@@ -99,6 +109,8 @@ test.describe("Admin → User builder visibility", () => {
     });
     builderId = builderIdFromUrl(page.url());
     await uploadBuilderLogo(page);
+
+    await waitUntilPublicBuilderExists({ name: builderName, id: builderId });
 
     projectName = uniqueQaProjectName();
     await createProject(page, {
@@ -140,6 +152,8 @@ test.describe("Admin → User builder visibility", () => {
       hqCity: "Surat",
     });
     builderId = builderIdFromUrl(page.url());
+
+    await waitUntilPublicBuilderExists({ name: builderName, id: builderId });
 
     const { context, page: userPage } = await openUserContext(browser);
     try {

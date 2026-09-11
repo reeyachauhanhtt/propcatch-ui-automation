@@ -9,7 +9,7 @@ import {
   openUserDetailByEmail,
   userIdFromUrl,
 } from "../../pages/admin/usersPage";
-import { USER_BASE_URL, openUserContext, requireUserEmail } from "../../pages/crossPlatform";
+import { USER_BASE_URL, openUserContext, requireUserEmail } from "../../pages/crossProduct";
 import { loginAsUser } from "../../pages/user/auth";
 import { accountAvatar } from "../../pages/user/profilePage";
 

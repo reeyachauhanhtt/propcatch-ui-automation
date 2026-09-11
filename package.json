@@ -7,7 +7,7 @@
     "test:admin": "playwright test --project=admin-chromium",
     "test:admin:auth": "playwright test --project=admin-auth",
     "test:admin:all": "playwright test --project=admin-auth && playwright test --project=admin-chromium",
-    "test:cross": "playwright test tests/cross-platform --project=admin-chromium",
+    "test:cross": "playwright test tests/cross-product --project=admin-chromium",
     "report": "playwright show-report --host localhost"
   },
   "keywords": [],

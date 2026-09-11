@@ -3,7 +3,7 @@ import {
   findAdminUserIdByEmail,
   openUserContext,
   requireUserEmail,
-} from "../../pages/crossPlatform";
+} from "../../pages/crossProduct";
 import {
   QA_VISIT_PROJECT,
   changeVisitStatus,
